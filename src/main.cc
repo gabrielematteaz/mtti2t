@@ -42,7 +42,6 @@ int main() {
   }
 
   mtti2t::MeanBinarizer binarizer(2, 2);
-  // mtti2t::ThresholdBinarizer binarizer(127);
 
   if (binarizer(result, 4, 4) == false) {
     return 2;
