@@ -3,6 +3,7 @@
 #include "binarizer.h"
 #include "BMP.h"
 #include "grayscale_converter.h"
+#include "text_finder.h"
 
 int main() {
   mtti2t::BMP::Pixel pixels[] = {
@@ -11,19 +12,6 @@ int main() {
       0,   0,   0,0,  50, 200, 255,0, 100,  90, 150,0, 100, 200, 150,0,
      10,  20, 200,0, 100,   0, 150,0,  90,  90, 150,0, 100, 200, 150,0,
   };
-
-  std::cout << sizeof(pixels) << '\n';
-
-  for (int y = 0; y < 4; ++y) {
-    for (int x = 0; x < 4; ++x) {
-      int index = y * 4 + x;
-
-      std::cout << (int)pixels[index].r << ' ' << (int)pixels[index].g <<
-          ' ' << (int)pixels[index].b << ' ';
-    }
-
-    std::cout << '\n';
-  }
 
   auto result = mtti2t::GrayscaleConverter::Rec601(pixels, 4, 4);
 
@@ -55,6 +43,12 @@ int main() {
     }
 
     std::cout << '\n';
+  }
+
+  auto rectangles = mtti2t::TextFinder::Histogram(result, 4, 4);
+
+  for (auto const& rectangle : rectangles) {
+    std::cout << rectangle.x << ' ' << rectangle.y << ' ' << rectangle.x2 << ' ' << rectangle.y2 << '\n';
   }
 
   delete[] result;

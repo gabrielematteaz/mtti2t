@@ -1,8 +1,5 @@
 #include "binarizer.h"
 
-#ifdef _DEBUG
-#include <iostream>
-#endif
 #include <new>
 
 namespace mtti2t {
@@ -49,12 +46,6 @@ namespace mtti2t {
         --y_block;
       }
 
-#ifdef _DEBUG
-      std::cout << index << '\n';
-      std::cout << x << ' ' << x_block << ' ' << x_adjustment << '\n';
-      std::cout << y << ' ' << y_block << ' ' << y_adjustment << '\n';
-#endif
-
       local_thresholds[y_block * width_blocks_ + x_block] += data[index];
     }
 
@@ -66,11 +57,6 @@ namespace mtti2t {
       int area = real_width * real_height;
 
       local_thresholds[index] /= area;
-
-#ifdef _DEBUG
-      std::cout << real_width << ' ' << real_height <<
-          local_thresholds[index] << '\n';
-#endif
     }
 
     for (int index = 0; index < pixel_count; ++index) {
