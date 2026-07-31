@@ -3,6 +3,7 @@
 #include "binarizer.h"
 #include "BMP.h"
 #include "grayscale_converter.h"
+#include "resizer.h"
 #include "text_finder.h"
 
 int main() {
@@ -51,5 +52,24 @@ int main() {
     std::cout << rectangle.x << ' ' << rectangle.y << ' ' << rectangle.x2 << ' ' << rectangle.y2 << '\n';
   }
 
+  auto resized_result = mtti2t::Resizer::Sample(result, 4, 4, 18, 12);
+
+  if (resized_result == nullptr) {
+    delete[] result;
+
+    return 3;
+  }
+
+  for (int y = 0; y < 12; ++y) {
+    for (int x = 0; x < 18; ++x) {
+      int index = y * 18 + x;
+
+      std::cout << (int)resized_result[index] << ' ';
+    }
+
+    std::cout << '\n';
+  }
+
+  delete[] resized_result;
   delete[] result;
 }
