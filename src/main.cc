@@ -3,6 +3,7 @@
 #include "binarizer.h"
 #include "BMP.h"
 #include "density_calculator.h"
+#include "distance_calculator.h"
 #include "grayscale_converter.h"
 #include "resizer.h"
 #include "text_finder.h"
