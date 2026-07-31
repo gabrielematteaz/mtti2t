@@ -6,7 +6,7 @@
 namespace mtti2t {
   class Resizer {
   public:
-    static std::uint8_t *Sample(std::uint8_t * data, int width, int height,
+    static std::uint8_t *WithoutInterpolation(std::uint8_t * data, int width, int height,
         int width_destination, int height_destination) noexcept;
   };
 }

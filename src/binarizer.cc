@@ -23,59 +23,29 @@ namespace mtti2t {
     }
 
     int pixel_count = width * height;
-    int block_width = width / width_blocks_;
-    int block_height = height / height_blocks_;
-    int width_remainder = width % width_blocks_;
-    int height_remainder = height % height_blocks_;
+    double block_width = static_cast < double > (width) / width_blocks_;
+    double block_height = static_cast < double > (height) / height_blocks_;
 
     for (int index = 0; index < pixel_count; ++index) {
       int x = index % width;
-      int x_block = x / block_width;
-      bool x_adjustment = x_block < width_remainder && x % block_width == 0;
-
-      if (x_adjustment) {
-        --x_block;
-      }
-
+      int x_block = static_cast < double > (x) / block_width;
       int y = index / width;
-      int y_block = y / block_height;
-      bool y_adjustment = y_block < height_remainder &&
-          y % block_height == 0;
-
-      if (y_adjustment) {
-        --y_block;
-      }
+      int y_block = static_cast < double > (y) / block_height;
 
       local_thresholds[y_block * width_blocks_ + x_block] += data[index];
     }
 
-    for (int index = 0; index < block_count; ++index) {
-      int real_width = block_width + (index % width_blocks_ <
-          width_remainder ? 1 : 0);
-      int real_height = block_height + (index / width_blocks_ <
-          height_remainder ? 1 : 0);
-      int area = real_width * real_height;
+    double area = block_width * block_height;
 
-      local_thresholds[index] /= area;
+    for (int index = 0; index < block_count; ++index) {
+      local_thresholds[index] = static_cast < double > (local_thresholds[index]) / area;
     }
 
     for (int index = 0; index < pixel_count; ++index) {
       int x = index % width;
-      int x_block = x / block_width;
-      bool x_adjustment = x_block < width_remainder && x % block_width == 0;
-
-      if (x_adjustment) {
-        --x_block;
-      }
-
+      int x_block = static_cast < double > (x) / block_width;
       int y = index / width;
-      int y_block = y / block_height;
-      bool y_adjustment = y_block < height_remainder &&
-          y % block_height == 0;
-
-      if (y_adjustment) {
-        --y_block;
-      }
+      int y_block = static_cast < double > (y) / block_height;
 
       data[index] = data[index] < local_thresholds[y_block * width_blocks_ +
           x_block] ? 0 : 255;

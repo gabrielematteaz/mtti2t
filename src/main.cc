@@ -2,6 +2,7 @@
 
 #include "binarizer.h"
 #include "BMP.h"
+#include "density_calculator.h"
 #include "grayscale_converter.h"
 #include "resizer.h"
 #include "text_finder.h"
@@ -52,7 +53,7 @@ int main() {
     std::cout << rectangle.x << ' ' << rectangle.y << ' ' << rectangle.x2 << ' ' << rectangle.y2 << '\n';
   }
 
-  auto resized_result = mtti2t::Resizer::Sample(result, 4, 4, 18, 12);
+  auto resized_result = mtti2t::Resizer::WithoutInterpolation(result, 4, 4, 8, 8);
 
   if (resized_result == nullptr) {
     delete[] result;
@@ -60,9 +61,9 @@ int main() {
     return 3;
   }
 
-  for (int y = 0; y < 12; ++y) {
-    for (int x = 0; x < 18; ++x) {
-      int index = y * 18 + x;
+  for (int y = 0; y < 8; ++y) {
+    for (int x = 0; x < 8; ++x) {
+      int index = y * 8 + x;
 
       std::cout << (int)resized_result[index] << ' ';
     }
@@ -70,6 +71,27 @@ int main() {
     std::cout << '\n';
   }
 
+  mtti2t::MeanDensityCalculator density_calculator(4, 4);
+  auto densities = density_calculator(resized_result, 8, 8);
+
+  if (densities == nullptr) {
+    delete[] resized_result;
+    delete[] result;
+
+    return 4;
+  }
+
+  for (int y = 0; y < 4; ++y) {
+    for (int x = 0; x < 4; ++x) {
+      int index = y * 4 + x;
+
+      std::cout << (int)densities[index] << ' ';
+    }
+
+    std::cout << '\n';
+  }
+
+  delete[] densities;
   delete[] resized_result;
   delete[] result;
 }
