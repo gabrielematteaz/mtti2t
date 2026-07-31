@@ -2,10 +2,6 @@
 
 #include <new>
 
-#ifdef _DEBUG
-#include <iostream>
-#endif
-
 namespace mtti2t {
   std::uint8_t * MeanDensityCalculator::operator () (std::uint8_t * data, int width, int height) noexcept {
     // TODO: more robust checks
