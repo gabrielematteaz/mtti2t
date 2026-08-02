@@ -1,8 +1,10 @@
 #include "binarizer.h"
 
+#include <cmath>
 #include <new>
 
 namespace mtti2t {
+  // TODO: loops may be faster
   bool MeanBinarizer::operator () (std::uint8_t * data, int width,
       int height) noexcept {
     // TODO: more robust checks
@@ -38,7 +40,7 @@ namespace mtti2t {
     double area = block_width * block_height;
 
     for (int index = 0; index < block_count; ++index) {
-      local_thresholds[index] = static_cast < double > (local_thresholds[index]) / area;
+      local_thresholds[index] = std::round(static_cast < double > (local_thresholds[index]) / area);
     }
 
     for (int index = 0; index < pixel_count; ++index) {
@@ -47,8 +49,7 @@ namespace mtti2t {
       int y = index / width;
       int y_block = static_cast < double > (y) / block_height;
 
-      data[index] = data[index] < local_thresholds[y_block * width_blocks_ +
-          x_block] ? 0 : 255;
+      data[index] = data[index] < local_thresholds[y_block * width_blocks_ + x_block] ? 0 : 255;
     }
 
     delete[] local_thresholds;
