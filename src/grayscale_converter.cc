@@ -14,11 +14,12 @@ namespace mtti2t {
 
       int pixel_count = width * height;
       Pointer < std::uint8_t > grayscale_data(pixel_count);
-      std::uint8_t *grayscale_data_raw = grayscale_data.value();
+      std::uint8_t * grayscale_data_raw = grayscale_data.value();
 
       if (grayscale_data_raw != nullptr) {
         for (int index = 0; index < pixel_count; ++index) {
-          grayscale_data_raw[index] = std::lrint(0.299 * data[index].r + 0.587 * data[index].g + 0.114 * data[index].b);
+          grayscale_data_raw[index] = static_cast < std::uint8_t > (std::lrint(0.299 * data[index].r +
+                0.587 * data[index].g + 0.114 * data[index].b));
         }
       }
 
@@ -32,11 +33,12 @@ namespace mtti2t {
 
       int pixel_count = width * height;
       Pointer < std::uint8_t > grayscale_data(pixel_count);
-      std::uint8_t *grayscale_data_raw = grayscale_data.value();
+      std::uint8_t * grayscale_data_raw = grayscale_data.value();
 
       if (grayscale_data_raw != nullptr) {
         for (int index = 0; index < pixel_count; ++index) {
-          grayscale_data_raw[index] = std::lrint(0.2126 * data[index].r + 0.7152 * data[index].g + 0.0722 * data[index].b);
+          grayscale_data_raw[index] = static_cast < std::uint8_t > (std::lrint(0.2126 * data[index].r +
+              0.7152 * data[index].g + 0.0722 * data[index].b));
         }
       }
 
@@ -50,11 +52,12 @@ namespace mtti2t {
 
       int pixel_count = width * height;
       Pointer < std::uint8_t > grayscale_data(pixel_count);
-      std::uint8_t *grayscale_data_raw = grayscale_data.value();
+      std::uint8_t * grayscale_data_raw = grayscale_data.value();
 
       if (grayscale_data_raw != nullptr) {
         for (int index = 0; index < pixel_count; ++index) {
-          grayscale_data_raw[index] = std::lrint(static_cast < double > (data[index].r + data[index].g + data[index].b) / 3);
+          grayscale_data_raw[index] = static_cast < std::uint8_t > (std::lrint(static_cast < double > (data[index].r +
+                data[index].g + data[index].b) / 3));
         }
       }
 
