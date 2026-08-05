@@ -3,6 +3,8 @@
 
 #include <cassert>
 #include <cstdint>
+#include <optional>
+#include <utility>
 
 #include "data_structures\pointer.h"
 
@@ -19,41 +21,34 @@ namespace mtti2t {
     // wolf algorithm
     // NICK algorithm
     // feng method
-
-    class NiblackThreshold {
-      // 15 or 25 usually
-      int window_width_;
-      int window_height_;
-      double K_; // between 0.2 and 0.5 usually (>> means more sensitive to text and noise ???)
-
-    public:
-      Pointer < std::uint8_t > operator () (std::uint8_t * grayscale_data, int width, int height) noexcept;
-
-      NiblackThreshold(int window_width, int window_height, double K) noexcept {
-        assert(window_width > 0 && window_height > 0);
-
-        window_width_ = window_width;
-        window_height_ = window_height;
-        K_ = K;
-      }
-    };
-
+  
+    // 15x15 or 25x25 usually, 0.2-0.5 usually
     class SauvolaThreshold {
-      // 15 or 25 usually
-      int window_width_;
-      int window_height_;
-      double K_; // between 0.2 and 0.5 usually (>> means more sensitive to text and noise ???)
+      struct Integrals {
+        std::uint64_t sum;
+        std::uint64_t sum_squared;
+      };
+
+      int width_radius_;
+      int height_radius_;
+      double K_;
+      bool use_integral_images_;
 
     public:
       Pointer < std::uint8_t >  operator () (std::uint8_t * grayscale_data, int width, int height) noexcept;
 
-      SauvolaThreshold(int window_width, int window_height, double K) noexcept {
-        assert(window_width > 0 && window_height > 0);
+      SauvolaThreshold(int width_radius, int height_radius, double K, bool use_integral_images) noexcept {
+        assert(width_radius > 0 && height_radius > 0);
 
-        window_width_ = window_width;
-        window_height_ = window_height;
+        width_radius_ = width_radius;
+        height_radius_ = height_radius;
         K_ = K;
+        use_integral_images_ = use_integral_images;
       }
+
+    private:
+      bool WithIntegralImages(std::uint8_t * grayscale_data, std::uint8_t * binary_data, int width, int height) noexcept;
+      bool WithoutIntegralImages(std::uint8_t * grayscale_data, std::uint8_t * binary_data, int width, int height) noexcept;
     };
 
     class GlobalThreshold {

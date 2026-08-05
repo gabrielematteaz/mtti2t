@@ -38,7 +38,7 @@ int main(int argc, char * argv[]) {
   grayscale_name.replace_filename("RESULT-GRAYSCALE.BMP");
   stbi_write_bmp(grayscale_name.string().c_str(), width, height, 1, grayscale_data_raw);
 
-  mtti2t::binarizers::SauvolaThreshold binarizer(15, 15, 0.4);
+  mtti2t::binarizers::SauvolaThreshold binarizer(15, 15, 0.2, true);
   mtti2t::Pointer < std::uint8_t > binary_data = binarizer(grayscale_data_raw, width, height);
   std::uint8_t * binary_data_raw = binary_data.value();
 
