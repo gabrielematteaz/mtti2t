@@ -3,17 +3,25 @@
 
 #include <cstdint>
 
-#include "BMP.h"
+#include "data_structures/pointer.h"
+#include "RGB.h"
 
 namespace mtti2t {
-  class GrayscaleConverter {
-  public:
-    static std::uint8_t * Rec601(BMP::Pixel const* data, int width,
-        int height) noexcept;
-    static std::uint8_t * Rec709(BMP::Pixel const* data, int width,
-        int height) noexcept;
-    static std::uint8_t * Mean(BMP::Pixel const* data, int width,
-        int height) noexcept;
+  namespace grayscale_converters {
+    class Recommendation601 {
+    public:
+      Pointer < std::uint8_t > operator () (RGB const* data, int width, int height) noexcept;
+    };
+
+    class Recommendation709 {
+    public:
+      Pointer < std::uint8_t > operator () (RGB const* data, int width, int height) noexcept;
+    };
+
+    class ArithmeticMean {
+    public:
+      Pointer < std::uint8_t > operator () (RGB const* data, int width, int height) noexcept;
+    };
   };
 }
 
