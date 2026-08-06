@@ -3,15 +3,11 @@
 #include <algorithm>
 #include <cmath>
 #include <new>
-#include <utility>
-
-// #include <iostream>
 
 namespace mtti2t {
-  // rewrite niblack and sauvola better + add optimization flag (size vs. speed)
-  // figure out why optimized version is different than not optimized one
   namespace binarizers {
-    Pointer < std::uint8_t >  SauvolaThreshold::operator () (std::uint8_t * grayscale_data, int width, int height) noexcept {
+    Pointer < std::uint8_t >  SauvolaThreshold::operator () (std::uint8_t const* grayscale_data, int width,
+          int height) noexcept {
       if (grayscale_data == nullptr || width < 0 || height < 0) {
         return { };
       }
@@ -40,7 +36,7 @@ namespace mtti2t {
       return binary_data;
     }
 
-    bool SauvolaThreshold::WithIntegralImages(std::uint8_t * grayscale_data, std::uint8_t * binary_data, int width,
+    bool SauvolaThreshold::WithIntegralImages(std::uint8_t const* grayscale_data, std::uint8_t * binary_data, int width,
           int height) noexcept {
       Pointer < Integrals > integral_image(width * height);
       Integrals * integral_image_raw = integral_image.value();
@@ -105,7 +101,7 @@ namespace mtti2t {
       return true;
     }
 
-    bool SauvolaThreshold::WithoutIntegralImages(std::uint8_t * grayscale_data, std::uint8_t * binary_data, int width,
+    bool SauvolaThreshold::WithoutIntegralImages(std::uint8_t const* grayscale_data, std::uint8_t * binary_data, int width,
           int height) noexcept {
       for (int y = 0, offset = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x, ++offset) {
@@ -138,7 +134,7 @@ namespace mtti2t {
       return true;
     }
 
-    Pointer < std::uint8_t > GlobalThreshold::operator () (std::uint8_t * grayscale_data, int width, int height) noexcept {
+    Pointer < std::uint8_t > GlobalThreshold::operator () (std::uint8_t const* grayscale_data, int width, int height) noexcept {
       if (grayscale_data == nullptr || width < 0 || height < 0) {
         return { };
       }

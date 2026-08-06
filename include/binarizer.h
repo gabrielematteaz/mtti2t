@@ -14,6 +14,7 @@ namespace mtti2t {
     // add logic to preserve e.g. local threshold (optimization)
     // add standard factories with some settings
 
+    // niblack (?)
     // otsu threshold
     // niblack threshold OK + integral image
     // sauvola threshold OK + integral image
@@ -35,7 +36,7 @@ namespace mtti2t {
       bool use_integral_images_;
 
     public:
-      Pointer < std::uint8_t >  operator () (std::uint8_t * grayscale_data, int width, int height) noexcept;
+      Pointer < std::uint8_t >  operator () (std::uint8_t const* grayscale_data, int width, int height) noexcept;
 
       SauvolaThreshold(int width_radius, int height_radius, double K, bool use_integral_images) noexcept {
         assert(width_radius > 0 && height_radius > 0);
@@ -47,15 +48,15 @@ namespace mtti2t {
       }
 
     private:
-      bool WithIntegralImages(std::uint8_t * grayscale_data, std::uint8_t * binary_data, int width, int height) noexcept;
-      bool WithoutIntegralImages(std::uint8_t * grayscale_data, std::uint8_t * binary_data, int width, int height) noexcept;
+      bool WithIntegralImages(std::uint8_t const* grayscale_data, std::uint8_t * binary_data, int width, int height) noexcept;
+      bool WithoutIntegralImages(std::uint8_t const* grayscale_data, std::uint8_t * binary_data, int width, int height) noexcept;
     };
 
     class GlobalThreshold {
       int threshold_;
 
     public:
-      Pointer < std::uint8_t > operator () (std::uint8_t * grayscale_data, int width, int height) noexcept;
+      Pointer < std::uint8_t > operator () (std::uint8_t const* grayscale_data, int width, int height) noexcept;
 
       GlobalThreshold(int threshold) noexcept {
         threshold_ = threshold;
