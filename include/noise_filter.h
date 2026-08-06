@@ -5,32 +5,26 @@
 
 namespace mtti2t {
   namespace noise_filters {
-    // dilatation & erosion
-    // opening & closing
+    // might be good idea to add a radius -> optimize with integral image
+    // TODO: optimize opening and closing
 
     class Dilatation {
-      int kernel_width_;
-      int kernel_height_;
-
     public:
-      Dilatation(int kernel_width, int kernel_height) noexcept {
-        kernel_width_ = kernel_width;
-        kernel_height_ = kernel_height;
-      }
-
       Pointer < std::uint8_t > operator () (std::uint8_t const* binarized_data, int width, int height) noexcept;
     };
 
     class Erosion {
-      int kernel_width_;
-      int kernel_height_;
-
     public:
-      Erosion(int kernel_width, int kernel_height) noexcept {
-        kernel_width_ = kernel_width;
-        kernel_height_ = kernel_height;
-      }
+      Pointer < std::uint8_t > operator () (std::uint8_t const* binarized_data, int width, int height) noexcept;
+    };
 
+    class Opening {
+    public:
+      Pointer < std::uint8_t > operator () (std::uint8_t const* binarized_data, int width, int height) noexcept;
+    };
+
+    class Closing {
+    public:
       Pointer < std::uint8_t > operator () (std::uint8_t const* binarized_data, int width, int height) noexcept;
     };
   };

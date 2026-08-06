@@ -53,19 +53,33 @@ int main(int argc, char * argv[]) {
   binary_name.replace_filename("RESULT-BINARY.PNG");
   stbi_write_png(binary_name.string().c_str(), width, height, 1, binary_data_raw, width);
 
-  mtti2t::noise_filters::Dilatation noise_filter(1, 1);
-  mtti2t::Pointer < std::uint8_t > filtered_data = noise_filter(binary_data_raw, width, height);
-  std::uint8_t * filtered_data_raw = filtered_data.value();
+  mtti2t::noise_filters::Erosion noise_filter1;
+  mtti2t::Pointer < std::uint8_t > filtered_data1 = noise_filter1(binary_data_raw, width, height);
+  std::uint8_t * filtered_data_raw1 = filtered_data1.value();
 
-  if (filtered_data_raw == nullptr) {
+  if (filtered_data_raw1 == nullptr) {
     std::cout << "filtered_data_raw == nullptr";
     stbi_image_free(data);
     return 4;
   }
 
-  std::filesystem::path dilated_name = argv[1];
-  dilated_name.replace_filename("RESULT-FILTERED.PNG");
-  stbi_write_png(dilated_name.string().c_str(), width, height, 1, filtered_data_raw, width);
+  std::filesystem::path filtered_name1 = argv[1];
+  filtered_name1.replace_filename("RESULT-FILTERED1.PNG");
+  stbi_write_png(filtered_name1.string().c_str(), width, height, 1, filtered_data_raw1, width);
+
+  mtti2t::noise_filters::Dilatation noise_filter2;
+  mtti2t::Pointer < std::uint8_t > filtered_data2 = noise_filter2(binary_data_raw, width, height);
+  std::uint8_t * filtered_data_raw2 = filtered_data2.value();
+
+  if (filtered_data_raw2 == nullptr) {
+    std::cout << "filtered_data_raw == nullptr";
+    stbi_image_free(data);
+    return 4;
+  }
+
+  std::filesystem::path filtered_name2 = argv[1];
+  filtered_name2.replace_filename("RESULT-FILTERED2.PNG");
+  stbi_write_png(filtered_name2.string().c_str(), width, height, 1, filtered_data_raw2, width);
 
   stbi_image_free(data);
 }

@@ -17,27 +17,17 @@ namespace mtti2t {
 
       for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-          bool found_white = false;
+          int offset = y * width + x;
+          int left_offset = offset - 1;
+          int up_offset = offset - width;
+          int right_offset = offset + 1;
+          int down_offset = offset + width;
 
-          for (int y_kernel = y - kernel_height_, y_kernel_end = y + kernel_height_;
-              !found_white && y_kernel <= y_kernel_end; ++y_kernel) {
-            if (y_kernel < 0 || y_kernel >= height) {
-              continue;
-            }
-
-            for (int x_kernel = x - kernel_width_, x_kernel_end = x + kernel_width_;
-                !found_white && x_kernel <= x_kernel_end; ++x_kernel) {
-              if (x_kernel < 0 || x_kernel >= width) {
-                continue;
-              }
-
-              if (binarized_data[y_kernel * width + x_kernel] == 255) {
-                found_white = true;
-              }
-            }
-          }
-
-          dilated_data_raw[y * width + x] = found_white ? 255 : 0;
+          dilated_data_raw[offset] = (binarized_data[offset] == 255 &&
+              (x <= 0 || binarized_data[left_offset] == 255) &&
+              (y <= 0 || binarized_data[up_offset] == 255) &&
+              (x >= width - 1 || binarized_data[right_offset] == 255) &&
+              (y >= height - 1 || binarized_data[down_offset] == 255)) ? 255 : 0;
         }
       }
 
@@ -59,31 +49,33 @@ namespace mtti2t {
 
       for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-          bool true_white = true;
+          int offset = y * width + x;
+          int left_offset = offset - 1;
+          int up_offset = offset - width;
+          int right_offset = offset + 1;
+          int down_offset = offset + width;
 
-          for (int y_kernel = y - kernel_height_, y_kernel_end = y + kernel_height_;
-              true_white && y_kernel <= y_kernel_end; ++y_kernel) {
-            if (y_kernel < 0 || y_kernel >= height) {
-              continue;
-            }
-
-            for (int x_kernel = x - kernel_width_, x_kernel_end = x + kernel_width_;
-                true_white && x_kernel <= x_kernel_end; ++x_kernel) {
-              if (x_kernel < 0 || x_kernel >= width) {
-                continue;
-              }
-
-              if (binarized_data[y_kernel * width + x_kernel] == 0) {
-                true_white = false;
-              }
-            }
-          }
-
-          dilated_data_raw[y * width + x] = true_white ? 255 : 0;
+          dilated_data_raw[offset] = binarized_data[offset] == 255 ||
+              (x > 0 && binarized_data[left_offset] == 255) ||
+              (y > 0 && binarized_data[up_offset] == 255) ||
+              (x < width - 1 && binarized_data[right_offset] == 255) ||
+              (y < height - 1 && binarized_data[down_offset] == 255) ? 255 : 0;
         }
       }
 
       return dilated_data;
+    }
+
+    Pointer < std::uint8_t > Opening::operator () (std::uint8_t const *binarized_data, int width, int height) noexcept {
+      auto TEMPORARY = Erosion()(binarized_data, width, height);
+
+      return Dilatation()(TEMPORARY.value(), width, height);
+    }
+
+    Pointer < std::uint8_t > Closing::operator () (std::uint8_t const *binarized_data, int width, int height) noexcept {
+      auto TEMPORARY = Dilatation()(binarized_data, width, height);
+
+      return Erosion()(TEMPORARY.value(), width, height);
     }
   }
 }
