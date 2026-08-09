@@ -8,7 +8,7 @@ namespace mtti2t {
 
   namespace grayscale_converters {
     Pointer < std::uint8_t > Recommendation601::operator () (RGB const* data, int width, int height) noexcept {
-      if (data == nullptr || width < 0 || height < 0) {
+      if (data == nullptr || width <= 0 || height <= 0) {
         return { };
       }
 
@@ -19,7 +19,7 @@ namespace mtti2t {
       if (grayscale_data_raw != nullptr) {
         for (int index = 0; index < pixel_count; ++index) {
           grayscale_data_raw[index] = static_cast < std::uint8_t > (std::lrint(0.299 * data[index].r +
-                0.587 * data[index].g + 0.114 * data[index].b));
+              0.587 * data[index].g + 0.114 * data[index].b));
         }
       }
 
@@ -27,7 +27,7 @@ namespace mtti2t {
     }
 
     Pointer < std::uint8_t > Recommendation709::operator () (RGB const* data, int width, int height) noexcept {
-      if (data == nullptr || width < 0 || height < 0) {
+      if (data == nullptr || width <= 0 || height <= 0) {
         return { };
       }
 
@@ -46,7 +46,7 @@ namespace mtti2t {
     }
 
     Pointer < std::uint8_t > ArithmeticMean::operator () (RGB const* data, int width, int height) noexcept {
-      if (data == nullptr || width < 0 || height < 0) {
+      if (data == nullptr || width <= 0 || height <= 0) {
         return { };
       }
 
@@ -57,7 +57,7 @@ namespace mtti2t {
       if (grayscale_data_raw != nullptr) {
         for (int index = 0; index < pixel_count; ++index) {
           grayscale_data_raw[index] = static_cast < std::uint8_t > (std::lrint(static_cast < double > (data[index].r +
-                data[index].g + data[index].b) / 3));
+              data[index].g + data[index].b) / 3));
         }
       }
 

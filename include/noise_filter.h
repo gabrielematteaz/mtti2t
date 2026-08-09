@@ -5,7 +5,26 @@
 
 namespace mtti2t {
   namespace noise_filters {
-    // might be good idea to add a radius -> optimize with integral image
+    ///////////////////////////////////////
+    // grayscale noise filters
+    ///////////////////////////////////////
+
+    // TODO: implement median and gaussian de-noising
+    // TODO: add a radius -> perreault or huang algorithm
+
+    class Median {
+
+    };
+
+    class Gaussian {
+
+    };
+
+    ///////////////////////////////////////
+    // binary noise filters
+    ///////////////////////////////////////
+
+    // TODO: add a radius -> van herk / gil-weman optimization
     // TODO: optimize opening and closing
 
     class Dilatation {

@@ -1,6 +1,7 @@
 #include "binarizer.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <new>
 
@@ -8,7 +9,7 @@ namespace mtti2t {
   namespace binarizers {
     Pointer < std::uint8_t >  SauvolaThreshold::operator () (std::uint8_t const* grayscale_data, int width,
           int height) noexcept {
-      if (grayscale_data == nullptr || width < 0 || height < 0) {
+      if (grayscale_data == nullptr || width <= 0 || height <= 0) {
         return { };
       }
 
@@ -135,7 +136,7 @@ namespace mtti2t {
     }
 
     Pointer < std::uint8_t > GlobalThreshold::operator () (std::uint8_t const* grayscale_data, int width, int height) noexcept {
-      if (grayscale_data == nullptr || width < 0 || height < 0) {
+      if (grayscale_data == nullptr || width <= 0 || height <= 0) {
         return { };
       }
 
@@ -153,5 +154,56 @@ namespace mtti2t {
 
       return binary_data;
     }
-  };
+
+    int GetOtsuThreshold(std::uint8_t const* grayscale_data, int width, int height) noexcept {
+      assert(grayscale_data != nullptr && width > 0 && height > 0);
+
+      int intensities[256]{ };
+      int pixel_count = width * height;
+
+      for (int index = 0; index < pixel_count; ++index) {
+        ++intensities[grayscale_data[index]];
+      }
+
+      std::int64_t total_intensity = 0;
+
+      for (int index = 0; index < 256; ++index) {
+        total_intensity = total_intensity + index * intensities[index];
+      }
+
+      std::int64_t sum_background = 0;
+      int weight_background = 0;
+      double max_variance = 0;
+      int best_threshold = 0;
+
+      for (int threshold = 0; threshold < 256; ++threshold) {
+        weight_background = weight_background + intensities[threshold];
+
+        if (weight_background == 0) {
+          continue;
+        }
+
+        int weight_foreground = pixel_count - weight_background;
+
+        if (weight_foreground == 0) {
+          break;
+        }
+
+        sum_background = sum_background + threshold * intensities[threshold];
+
+        double mean_background = static_cast < double > (sum_background) / weight_background;
+        double mean_foreground = static_cast < double > (total_intensity - sum_background) / weight_foreground;
+        double mean_difference = mean_background - mean_foreground;
+
+        double variance = weight_background * weight_foreground * (mean_difference * mean_difference);
+
+        if (variance > max_variance) {
+          max_variance = variance;
+          best_threshold = threshold;
+        }
+      }
+
+      return best_threshold;
+    }
+  }
 }

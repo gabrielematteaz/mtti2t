@@ -67,15 +67,11 @@ namespace mtti2t {
     }
 
     Pointer < std::uint8_t > Opening::operator () (std::uint8_t const *binarized_data, int width, int height) noexcept {
-      auto TEMPORARY = Erosion()(binarized_data, width, height);
-
-      return Dilatation()(TEMPORARY.value(), width, height);
+      return { };
     }
 
     Pointer < std::uint8_t > Closing::operator () (std::uint8_t const *binarized_data, int width, int height) noexcept {
-      auto TEMPORARY = Dilatation()(binarized_data, width, height);
-
-      return Erosion()(TEMPORARY.value(), width, height);
+      return { };
     }
   }
 }
