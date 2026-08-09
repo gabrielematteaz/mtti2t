@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <optional>
 #include <utility>
+#include <variant>
 
 #include "data_structures\pointer.h"
 
@@ -14,9 +15,9 @@ namespace mtti2t {
     // add logic to preserve e.g. local threshold (optimization)
     // add standard factories with some settings
 
-    // otsu threshold
-    // niblack threshold OK + integral image
-    // sauvola threshold OK + integral image
+    // niblack (?) + integral image
+    // otsu threshold OK
+    // sauvola threshold OK + integral image OK
     // super noisy ->
     // wolf algorithm
     // NICK algorithm
@@ -35,7 +36,7 @@ namespace mtti2t {
       bool use_integral_images_;
 
     public:
-      Pointer < std::uint8_t >  operator () (std::uint8_t * grayscale_data, int width, int height) noexcept;
+      Pointer < std::uint8_t >  operator () (std::uint8_t const* grayscale_data, int width, int height) noexcept;
 
       SauvolaThreshold(int width_radius, int height_radius, double K, bool use_integral_images) noexcept {
         assert(width_radius > 0 && height_radius > 0);
@@ -47,21 +48,42 @@ namespace mtti2t {
       }
 
     private:
-      bool WithIntegralImages(std::uint8_t * grayscale_data, std::uint8_t * binary_data, int width, int height) noexcept;
-      bool WithoutIntegralImages(std::uint8_t * grayscale_data, std::uint8_t * binary_data, int width, int height) noexcept;
+      bool WithIntegralImages(std::uint8_t const* grayscale_data, std::uint8_t * binary_data, int width, int height) noexcept;
+      bool WithoutIntegralImages(std::uint8_t const* grayscale_data, std::uint8_t * binary_data, int width, int height) noexcept;
     };
 
     class GlobalThreshold {
-      int threshold_;
+      double threshold_;
 
     public:
-      Pointer < std::uint8_t > operator () (std::uint8_t * grayscale_data, int width, int height) noexcept;
+      Pointer < std::uint8_t > operator () (std::uint8_t const* grayscale_data, int width, int height) noexcept;
 
-      GlobalThreshold(int threshold) noexcept {
+      GlobalThreshold(double threshold) noexcept {
         threshold_ = threshold;
       }
     };
-  };
+
+    int GetOtsuThreshold(std::uint8_t const* grayscale_data, int width, int height) noexcept;
+
+    using Binarizer = std::variant < std::monostate, SauvolaThreshold, GlobalThreshold >;
+
+    template < typename BinarizerType >
+    inline Pointer < std::uint8_t > Binarize(BinarizerType & binarizer, std::uint8_t const* grayscale_data, int width,
+        int height) noexcept {
+      return binarizer(grayscale_data, width, height);
+    }
+
+    inline Pointer < std::uint8_t > Binarize(std::monostate &, std::uint8_t const*, int, int) noexcept {
+      return { };
+    }
+
+    inline Pointer < std::uint8_t > Binarize(Binarizer & binarizer, std::uint8_t const* grayscale_data, int width,
+        int height) noexcept {
+      return std::visit([=] (auto & binarizer) noexcept -> Pointer < std::uint8_t > {
+        return Binarize(binarizer, grayscale_data, width, height);
+      }, binarizer);
+    }
+  }
 }
 
 #endif
