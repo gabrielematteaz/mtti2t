@@ -68,19 +68,19 @@ namespace mtti2t {
     using Binarizer = std::variant < std::monostate, SauvolaThreshold, GlobalThreshold >;
 
     template < typename BinarizerType >
-    inline Pointer < std::uint8_t > Binarize(BinarizerType & binarizer, std::uint8_t const* grayscale_data, int width,
+    inline Pointer < std::uint8_t > ApplyBinarization(BinarizerType & binarizer, std::uint8_t const* grayscale_data, int width,
         int height) noexcept {
       return binarizer(grayscale_data, width, height);
     }
 
-    inline Pointer < std::uint8_t > Binarize(std::monostate &, std::uint8_t const*, int, int) noexcept {
+    inline Pointer < std::uint8_t > ApplyBinarization(std::monostate &, std::uint8_t const*, int, int) noexcept {
       return { };
     }
 
-    inline Pointer < std::uint8_t > Binarize(Binarizer & binarizer, std::uint8_t const* grayscale_data, int width,
+    inline Pointer < std::uint8_t > ApplyBinarization(Binarizer & binarizer, std::uint8_t const* grayscale_data, int width,
         int height) noexcept {
       return std::visit([=] (auto & binarizer) noexcept -> Pointer < std::uint8_t > {
-        return Binarize(binarizer, grayscale_data, width, height);
+        return ApplyBinarization(binarizer, grayscale_data, width, height);
       }, binarizer);
     }
   }

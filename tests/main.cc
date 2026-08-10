@@ -20,6 +20,9 @@ int main(int argc, char * argv[]) {
     return 1;
   }
 
+  std::filesystem::path name = argv[1];
+  std::print("Loading provided image \"{}\" ... ", name.string()); // TODO: handle Windows and Linux code
+
   int width, height, depth;
   auto data = stbi_load(argv[1], &width, &height, &depth, 3);
 
@@ -28,8 +31,13 @@ int main(int argc, char * argv[]) {
     return 2;
   }
 
-  mtti2t::grayscale_converters::Recommendation601 grayscale_converter;
-  mtti2t::Pointer < std::uint8_t > grayscale_data = grayscale_converter(reinterpret_cast < mtti2t::RGB* > (data), width, height);
+  std::print("Done\nConverting to grayscale using [...] ... "); // FIX when decision tree is made
+
+  // TODO: decision tree
+  mtti2t::grayscale_converters::GrayscaleConverter grayscale_converter = mtti2t::grayscale_converters::Recommendation601();
+  mtti2t::Pointer < std::uint8_t > grayscale_data =
+      mtti2t::grayscale_converters::ApplyGrayscaleConversion(grayscale_converter,
+      reinterpret_cast < mtti2t::RGB* > (data), width, height);
   std::uint8_t * grayscale_data_raw = grayscale_data.value();
 
   if (grayscale_data_raw == nullptr) {
@@ -38,24 +46,28 @@ int main(int argc, char * argv[]) {
     return 3;
   }
 
+  std::println("Done");
+
   std::filesystem::path grayscale_name = argv[1];
   grayscale_name.replace_filename("RESULT-GRAYSCALE.PNG");
   stbi_write_png(grayscale_name.string().c_str(), width, height, 1, grayscale_data_raw, width);
 
-  auto [brightness, contrast] = mtti2t::image_metrics::GetBrightnessAndContrast(grayscale_data_raw, width, height);
+  auto basics = mtti2t::image_metrics::GetBasics(grayscale_data_raw, width, height);
   auto noisiness = mtti2t::image_metrics::GetNoisiness(grayscale_data_raw, width, height);
+  auto bimodality = mtti2t::image_metrics::GetBimodality(grayscale_data_raw, width, height);
 
-  std::cout << "Brightness: " << brightness << "\nContrast: " << contrast << "\nNoisiness: " << noisiness << '\n';
+  std::cout << "Brightness: " << basics.brightness << "\nContrast: " << basics.contrast << "\nNoisiness: " << noisiness <<
+      "\nCoefficient of variation: " << basics.CV << "\nBimodality: " << bimodality << '\n';
 
   mtti2t::binarizers::Binarizer binarizer;
 
-  if (noisiness >= 0 && noisiness < 2) {
+  if (bimodality > 0.55) {
     int otsu_threshold = mtti2t::binarizers::GetOtsuThreshold(grayscale_data_raw, width, height);
 
-    std::println("Low noisiness -> Selected Otsu's method\nUsing global threshold: {}", otsu_threshold);
+    std::println("Bimodal image -> Selected Otsu's method\nUsing global threshold: {}", otsu_threshold);
     binarizer = mtti2t::binarizers::GlobalThreshold(otsu_threshold);
   }
-  else if (noisiness >= 2 && noisiness < 5) {
+  else if (noisiness >= 0 && noisiness < 5) {
     // TODO: let user decide which algorithm to use / auto calculate bets window size and K
 
     int window_width = 7 * 2 + 1;
@@ -77,7 +89,10 @@ int main(int argc, char * argv[]) {
     return 4;
   }
 
-  mtti2t::Pointer < std::uint8_t > binary_data = mtti2t::binarizers::Binarize(binarizer, grayscale_data_raw, width, height);
+  std::print("Converting to binary ... ");
+
+  mtti2t::Pointer < std::uint8_t > binary_data = mtti2t::binarizers::ApplyBinarization(binarizer,
+      grayscale_data_raw, width, height);
   std::uint8_t * binary_data_raw = binary_data.value();
 
   if (binary_data_raw == nullptr) {
@@ -85,6 +100,8 @@ int main(int argc, char * argv[]) {
     stbi_image_free(data);
     return 3;
   }
+
+  std::print("Done");
 
   std::filesystem::path binary_name = argv[1];
   binary_name.replace_filename("RESULT-BINARY.PNG");
