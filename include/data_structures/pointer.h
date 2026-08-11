@@ -42,7 +42,11 @@ namespace mtti2t {
         return *this;
       }
 
-      ValueType * value() const noexcept {
+      const ValueType * value() const noexcept {
+        return value_;
+      }
+
+      ValueType * value() noexcept {
         return value_;
       }
 

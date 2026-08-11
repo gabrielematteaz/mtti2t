@@ -39,6 +39,36 @@ namespace mtti2t {
     inline double GetNoisiness(std::uint8_t const* grayscale_data, int width, int height) noexcept {
       assert(grayscale_data != nullptr && width > 0 && height > 0);
 
+      double sum = 0.0;
+
+      for (int y = 1; y < height - 1; ++y) {
+        for (int x = 1; x < width - 1; ++x) {
+          double value = 0.0;
+
+          // apply immerkaer kernel
+          value = value + grayscale_data[(y - 1) * width + (x - 1)];
+          value = value - 2.0 * grayscale_data[(y - 1) * width + x];
+          value = value + grayscale_data[(y - 1) * width + (x + 1)];
+          value = value - 2.0 * grayscale_data[y * width + (x - 1)];
+          value = value + 4.0 * grayscale_data[y * width + x];
+          value = value - 2.0 * grayscale_data[y * width + (x + 1)];
+          value = value + grayscale_data[(y + 1) * width + (x - 1)];
+          value = value - 2.0 * grayscale_data[(y + 1) * width + x];
+          value = value + grayscale_data[(y + 1) * width + (x + 1)];
+
+          sum = sum + std::abs(value);
+        }
+      }
+
+      double K = 1.25331413732; // SQRT(PI/2)
+      double M = 6.0; // standard deviation of kernel
+
+      return sum * K / (M * (width - 2) * (height - 2));
+    }
+
+    inline double GetEntropy(std::uint8_t const* grayscale_data, int width, int height) noexcept {
+      assert(grayscale_data != nullptr && width > 0 && height > 0);
+
       int frequencies[256]{ };
       int pixel_count = width * height;
 
@@ -105,6 +135,51 @@ namespace mtti2t {
       double kurtosis = fourth_moment / (second_moment * second_moment); // Pearson's kurtosis
 
       return (skewness * skewness + 1) / kurtosis;
+    }
+
+    // text documents usually have this around 0.03 and 0.10
+    inline double GetEdgeDensity(std::uint8_t const* grayscale_data, int width, int height) noexcept {
+      assert(grayscale_data != nullptr && width > 0 && height > 0);
+
+      // Sobel kernels
+      int x_kernels[3][3] = { -1, 0, 1, -2, 0, 2, -1, 0, 1 };
+      int y_kernels[3][3] = { -1, -2, -1, 0, 0, 0, 1, 2, 1 };
+
+      double total_magnitude = 0.0;
+
+      for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+          double gradient_1 = 0;
+          double gradient_2 = 0;
+
+          for (int I = -1; I <= 1; ++I) {
+            int y_real = y + I;
+
+            for (int J = -1; J <= 1; ++J) {
+              int x_real = x + J;
+
+              if (y_real < 0 || y_real >= height || x_real < 0 || x_real >= width) {
+                continue;
+              }
+
+              std::uint8_t pixel = grayscale_data[y_real * width + x_real];
+
+              gradient_1 = gradient_1 + pixel * x_kernels[I + 1][J + 1];
+              gradient_2 = gradient_2 + pixel * y_kernels[I + 1][J + 1];
+            }
+          }
+
+          // use manhattan distance if need to be fast -> normalization costant must be width * height * 2040
+          double magnitude = std::sqrt(gradient_1 * gradient_1 + gradient_2 * gradient_2);
+
+          total_magnitude = total_magnitude + magnitude;
+        }
+      }
+
+      // SQRT((4*255)^2 + (4*255)^2) is circa 1141
+      double maximum = width * height * 1141.0;
+
+      return static_cast < double > (total_magnitude) / maximum;
     }
   }
 }
