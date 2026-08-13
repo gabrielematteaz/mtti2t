@@ -1,22 +1,22 @@
 #include "grayscale_converter.h"
 
+#include <cassert>
 #include <cmath>
 #include <new>
 
 namespace mtti2t {
-  // note: lrint is fast but not optimal as it relies on the current rounding mode
+  // NOTE: lrint is fast but not optimal as it relies on the current rounding mode
 
   namespace grayscale_converters {
-    Pointer < std::uint8_t > Recommendation601::operator () (RGB const* data, int width, int height) noexcept {
-      if (data == nullptr || width <= 0 || height <= 0) {
-        return { };
-      }
+    Pointer < std::uint8_t > Recommendation601::operator () (RGB::Pixel const* data, int width, int height) noexcept {
+      assert(data != nullptr && width > 0 && height > 0);
 
       int pixel_count = width * height;
       Pointer < std::uint8_t > grayscale_data(pixel_count);
-      std::uint8_t * grayscale_data_raw = grayscale_data.value();
 
-      if (grayscale_data_raw != nullptr) {
+      if (grayscale_data) {
+        std::uint8_t * grayscale_data_raw = grayscale_data.value();
+
         for (int index = 0; index < pixel_count; ++index) {
           grayscale_data_raw[index] = static_cast < std::uint8_t > (std::lrint(0.299 * data[index].r +
               0.587 * data[index].g + 0.114 * data[index].b));
@@ -26,16 +26,15 @@ namespace mtti2t {
       return grayscale_data;
     }
 
-    Pointer < std::uint8_t > Recommendation709::operator () (RGB const* data, int width, int height) noexcept {
-      if (data == nullptr || width <= 0 || height <= 0) {
-        return { };
-      }
+    Pointer < std::uint8_t > Recommendation709::operator () (RGB::Pixel const* data, int width, int height) noexcept {
+      assert(data != nullptr && width > 0 && height > 0);
 
       int pixel_count = width * height;
       Pointer < std::uint8_t > grayscale_data(pixel_count);
-      std::uint8_t * grayscale_data_raw = grayscale_data.value();
 
-      if (grayscale_data_raw != nullptr) {
+      if (grayscale_data) {
+        std::uint8_t * grayscale_data_raw = grayscale_data.value();
+
         for (int index = 0; index < pixel_count; ++index) {
           grayscale_data_raw[index] = static_cast < std::uint8_t > (std::lrint(0.2126 * data[index].r +
               0.7152 * data[index].g + 0.0722 * data[index].b));
@@ -45,19 +44,18 @@ namespace mtti2t {
       return grayscale_data;
     }
 
-    Pointer < std::uint8_t > ArithmeticMean::operator () (RGB const* data, int width, int height) noexcept {
-      if (data == nullptr || width <= 0 || height <= 0) {
-        return { };
-      }
+    Pointer < std::uint8_t > ArithmeticMean::operator () (RGB::Pixel const* data, int width, int height) noexcept {
+      assert(data != nullptr && width > 0 && height > 0);
 
       int pixel_count = width * height;
       Pointer < std::uint8_t > grayscale_data(pixel_count);
-      std::uint8_t * grayscale_data_raw = grayscale_data.value();
 
-      if (grayscale_data_raw != nullptr) {
+      if (grayscale_data) {
+        std::uint8_t * grayscale_data_raw = grayscale_data.value();
+
         for (int index = 0; index < pixel_count; ++index) {
-          grayscale_data_raw[index] = static_cast < std::uint8_t > (std::lrint(static_cast < double > (data[index].r +
-              data[index].g + data[index].b) / 3));
+          grayscale_data_raw[index] = static_cast < std::uint8_t > (std::lrint(static_cast < double >
+              (data[index].r + data[index].g + data[index].b) / 3));
         }
       }
 

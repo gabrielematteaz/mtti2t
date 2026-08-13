@@ -5,36 +5,24 @@
 
 #include "data_structures/pointer.h"
 #include "HSV.h"
+#include "RGB.h"
 
 namespace mtti2t {
-  inline Pointer < std::uint8_t > MergeMask(std::uint8_t const* mask_1, std::uint8_t const* mask_2, int width, int height) noexcept {
-    if (mask_1 == nullptr || mask_2 == nullptr || width <= 0 || height <= 0) {
-      return { };
+  namespace preprocessing {
+    struct Boundaries {
+      HSV::Pixel low;
+      HSV::Pixel high;
+    };
+
+    constexpr Boundaries GetDarkTextBoundaries() noexcept {
+      return { 0.0f, 0.0f, 0.0f, 360.0f, 1.0f, 0.3f };
     }
 
-    int pixel_count = width * height;
-    Pointer < std::uint8_t > result(pixel_count);
-    std::uint8_t * result_raw = result.value();
-
-    if (result_raw == nullptr) {
-      return { };
+    constexpr Boundaries GetLightTextBoundaries() noexcept {
+      return { 0.0f, 0.0f, 0.7f, 360.0f, 0.2f, 1.0f };
     }
 
-    for (int index = 0; index < pixel_count; ++index) {
-      result_raw[index] = mask_1[index] | mask_2[index];
-    }
-
-    return result;
-  }
-
-  inline void Invert(std::uint8_t * mask, int width, int height) noexcept {
-    if (mask == nullptr || width <= 0 || height <= 0) {
-      return;
-    }
-
-    for (int index = 0, pixel_count = width * height; index <= pixel_count; ++index) {
-      mask[index] = 255 - mask[index];
-    }
+    Pointer < std::uint8_t > GetMask(HSV::Pixel const* data, int width, int height, Boundaries boundaries) noexcept;
   }
 }
 

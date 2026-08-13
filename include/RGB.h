@@ -4,11 +4,13 @@
 #include <cstdint>
 
 namespace mtti2t {
-  struct RGB {
-    std::uint8_t r;
-    std::uint8_t g;
-    std::uint8_t b;
-  };
+  namespace RGB {
+    struct Pixel {
+      std::uint8_t r;
+      std::uint8_t g;
+      std::uint8_t b;
+    };
+  }
 }
 
 #endif

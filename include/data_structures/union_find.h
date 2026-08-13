@@ -96,10 +96,10 @@ namespace mtti2t {
     }
 
   private:
-    UnionFind(int * parent, int * rank, int set_count_) noexcept {
+    UnionFind(int * parent, int * rank, int set_count) noexcept {
       parent_ = parent;
       rank_ = rank;
-      set_count_ = set_count_;
+      set_count_ = set_count;
     }
 
     void Destroy() noexcept {

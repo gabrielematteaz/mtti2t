@@ -5,7 +5,6 @@
 #include "binarizer.h"
 #include "RGB.h"
 #include "grayscale_converter.h"
-#include "HSV.h"
 #include "noise_filter.h"
 #include "image_metrics.h"
 #include "preprocessing.h"
@@ -35,25 +34,13 @@ int main(int argc, char * argv[]) {
     return 2;
   }
 
-  auto HSV_data = mtti2t::ToHSV(reinterpret_cast < mtti2t::RGB* > (data), width, height);
-  auto mask_low = mtti2t::GetMask(HSV_data.value(), width, height, mtti2t::GetDarkTextBoundaries());
-  auto mask_high = mtti2t::GetMask(HSV_data.value(), width, height, mtti2t::GetLightTextBoundaries());
-  auto merged = mtti2t::MergeMask(mask_low.value(), mask_high.value(), width, height);
-  // mtti2t::Invert(merged.value(), width, height);
-
-  auto invert_res = mtti2t::ApplyMask(reinterpret_cast < mtti2t::RGB* > (data), merged.value(), width, height);
-
-  std::filesystem::path invert_name = argv[1];
-  invert_name.replace_filename("RESULT-INVERT.PNG");
-  stbi_write_png(invert_name.string().c_str(), width, height, 3, invert_res.value(), width * 3);
-
   std::print("Done\nConverting to grayscale using [...] ... "); // FIX when decision tree is made
 
   // TODO: decision tree
-  mtti2t::grayscale_converters::GrayscaleConverter grayscale_converter = mtti2t::grayscale_converters::Recommendation601();
+  mtti2t::grayscale_converters::GrayscaleConverter grayscale_converter;
   mtti2t::Pointer < std::uint8_t > grayscale_data =
       mtti2t::grayscale_converters::ApplyGrayscaleConversion(grayscale_converter,
-      reinterpret_cast < mtti2t::RGB* > (invert_res.value()), width, height);
+      reinterpret_cast < mtti2t::RGB::Pixel* > (data), width, height);
   std::uint8_t * grayscale_data_raw = grayscale_data.value();
 
   if (grayscale_data_raw == nullptr) {
@@ -83,7 +70,7 @@ int main(int argc, char * argv[]) {
   // NOTE: may be good idea to add a feedback loop if multiple attempts are needed
   // e.g. using canny edge density to decide if good threshold
 
-  if (bimodality > 0.60 && basics.CV < 1.5 && noisiness < 7.0) {
+  if (bimodality > 0.60 && basics.CV < 1.5) {
     int otsu_threshold = mtti2t::binarizers::GetOtsuThreshold(grayscale_data_raw, width, height);
 
     std::println("Bimodal image -> Selected Otsu's method\nUsing global threshold: {}", otsu_threshold);

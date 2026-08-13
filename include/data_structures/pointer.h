@@ -42,6 +42,10 @@ namespace mtti2t {
         return *this;
       }
 
+      explicit operator bool() const noexcept {
+        return value_ != nullptr;
+      }
+
       const ValueType * value() const noexcept {
         return value_;
       }
