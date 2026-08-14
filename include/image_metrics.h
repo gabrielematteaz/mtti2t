@@ -14,15 +14,15 @@ namespace mtti2t {
       double CV; // coefficient of variation
     };
 
-    inline Basics GetBasics(std::uint8_t const* grayscale_data, int width, int height) noexcept {
-      assert(grayscale_data != nullptr && width > 0 && height > 0);
+    inline Basics GetBasics(std::uint8_t const* data, int width, int height) noexcept {
+      assert(data != nullptr && width > 0 && height > 0);
 
       int pixel_count = width * height;
       std::int64_t sum = 0;
       std::int64_t squared_sum = 0;
 
       for (int index = 0; index < pixel_count; ++index) {
-        std::uint8_t pixel = grayscale_data[index];
+        std::uint8_t pixel = data[index];
 
         sum = sum + pixel;
         squared_sum = squared_sum + pixel * pixel;
@@ -36,47 +36,54 @@ namespace mtti2t {
           std::abs(arithmetic_mean) > 1e-9 ? standard_deviation / arithmetic_mean : 0.0 };
     }
 
-    inline double GetNoisiness(std::uint8_t const* grayscale_data, int width, int height) noexcept {
-      assert(grayscale_data != nullptr && width > 0 && height > 0);
+    inline double GetNoisiness(std::uint8_t const* data, int width, int height) noexcept {
+      assert(data != nullptr && width > 0 && height > 0);
 
-      double sum = 0.0;
+      std::int64_t sum = 0;
+      int last_row = height - 1;
+      int last_column = width - 1;
 
-      for (int y = 1; y < height - 1; ++y) {
-        for (int x = 1; x < width - 1; ++x) {
-          double value = 0.0;
+      for (int y = 1; y < last_row; ++y) {
+
+        for (int x = 1; x < last_column; ++x) {
+          std::int64_t value = 0;
+
+          int offset = y * width + x;
+          int previous_row_offset = offset - width;
+          int next_row_offset = offset + width;
 
           // apply immerkaer kernel
-          value = value + grayscale_data[(y - 1) * width + (x - 1)];
-          value = value - 2.0 * grayscale_data[(y - 1) * width + x];
-          value = value + grayscale_data[(y - 1) * width + (x + 1)];
-          value = value - 2.0 * grayscale_data[y * width + (x - 1)];
-          value = value + 4.0 * grayscale_data[y * width + x];
-          value = value - 2.0 * grayscale_data[y * width + (x + 1)];
-          value = value + grayscale_data[(y + 1) * width + (x - 1)];
-          value = value - 2.0 * grayscale_data[(y + 1) * width + x];
-          value = value + grayscale_data[(y + 1) * width + (x + 1)];
+          value = value + data[previous_row_offset - 1];
+          value = value - 2.0 * data[previous_row_offset];
+          value = value + data[previous_row_offset + 1];
+          value = value - 2.0 * data[offset - 1];
+          value = value + 4.0 * data[offset];
+          value = value - 2.0 * data[offset + 1];
+          value = value + data[next_row_offset - 1];
+          value = value - 2.0 * data[next_row_offset];
+          value = value + data[next_row_offset + 1];
 
           sum = sum + std::abs(value);
         }
       }
 
-      double K = 1.25331413732; // SQRT(PI/2)
-      double M = 6.0; // standard deviation of kernel
+      constexpr double K = 1.25331413732; // SQRT(PI/2)
+      constexpr double M = 6.0; // standard deviation of kernel
 
       return sum * K / (M * (width - 2) * (height - 2));
     }
 
-    inline double GetEntropy(std::uint8_t const* grayscale_data, int width, int height) noexcept {
-      assert(grayscale_data != nullptr && width > 0 && height > 0);
+    inline double GetEntropy(std::uint8_t const* data, int width, int height) noexcept {
+      assert(data != nullptr && width > 0 && height > 0);
 
       int frequencies[256]{ };
       int pixel_count = width * height;
 
       for (int index = 0; index < pixel_count; ++index) {
-        ++frequencies[grayscale_data[index]];
+        ++frequencies[data[index]];
       }
 
-      double sum = 0;
+      double sum = 0.0;
 
       for (int frequency : frequencies) {
         if (frequency != 0) {
@@ -89,14 +96,14 @@ namespace mtti2t {
       return -sum;
     }
 
-    inline double GetBimodality(std::uint8_t const* grayscale_data, int width, int height) noexcept {
-      assert(grayscale_data != nullptr && width > 0 && height > 0);
+    inline double GetBimodality(std::uint8_t const* data, int width, int height) noexcept {
+      assert(data != nullptr && width > 0 && height > 0);
 
       int intensities[256]{ };
       int pixel_count = width * height;
 
       for (int index = 0; index < pixel_count; ++index) {
-        ++intensities[grayscale_data[index]];
+        ++intensities[data[index]];
       }
 
       std::int64_t total_intensity = 0;
@@ -117,10 +124,11 @@ namespace mtti2t {
 
         double difference = index - arithmetic_mean;
         double squared_difference = difference * difference;
+        int intensity = intensities[index];
 
-        second_moment = second_moment + (squared_difference * intensities[index]);
-        third_moment = third_moment + (squared_difference * difference * intensities[index]);
-        fourth_moment = fourth_moment + (squared_difference * squared_difference * intensities[index]);
+        second_moment = second_moment + (squared_difference * intensity);
+        third_moment = third_moment + (squared_difference * difference * intensity);
+        fourth_moment = fourth_moment + (squared_difference * squared_difference * intensity);
       }
 
       second_moment = second_moment / pixel_count;
@@ -149,16 +157,20 @@ namespace mtti2t {
 
       for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-          double gradient_1 = 0;
-          double gradient_2 = 0;
+          int gradient_1 = 0;
+          int gradient_2 = 0;
 
           for (int I = -1; I <= 1; ++I) {
             int y_real = y + I;
 
+            if (y_real < 0 || y_real >= height) {
+              continue;
+            }
+
             for (int J = -1; J <= 1; ++J) {
               int x_real = x + J;
 
-              if (y_real < 0 || y_real >= height || x_real < 0 || x_real >= width) {
+              if (x_real < 0 || x_real >= width) {
                 continue;
               }
 
@@ -177,9 +189,10 @@ namespace mtti2t {
       }
 
       // SQRT((4*255)^2 + (4*255)^2) is circa 1141
-      double maximum = width * height * 1141.0;
+      constexpr double normalization = 1141.0;
+      double maximum = width * height * normalization;
 
-      return static_cast < double > (total_magnitude) / maximum;
+      return total_magnitude / maximum;
     }
   }
 }

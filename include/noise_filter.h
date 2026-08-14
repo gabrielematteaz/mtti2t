@@ -73,7 +73,7 @@ namespace mtti2t {
         size_ = size;
       }
 
-      Pointer < std::uint8_t > operator () (std::uint8_t const* grayscale_data, int width, int height) noexcept;
+      Pointer < std::uint8_t > operator () (std::uint8_t const* data, int width, int height) noexcept;
     };
 
     class Gaussian {
@@ -88,7 +88,7 @@ namespace mtti2t {
         sigma_ = sigma;
       }
 
-      Pointer < std::uint8_t > operator () (std::uint8_t const* grayscale_data, int width, int height) noexcept;
+      Pointer < std::uint8_t > operator () (std::uint8_t const* data, int width, int height) noexcept;
 
       static Pointer < double > GetKernel(int size, double sigma) noexcept;
     };
@@ -100,7 +100,7 @@ namespace mtti2t {
     // TODO: add a radius -> van herk / gil-weman optimization
     // TODO: optimize opening and closing
 
-    class Dilatation {
+    class Dilation {
     public:
       Pointer < std::uint8_t > operator () (std::uint8_t const* data, int width, int height) noexcept;
     };
@@ -110,13 +110,13 @@ namespace mtti2t {
       Pointer < std::uint8_t > operator () (std::uint8_t const* data, int width, int height) noexcept;
     };
 
-    // TODO: erosion then dilatation
+    // TODO: erosion then dilation
     class Opening {
     public:
       Pointer < std::uint8_t > operator () (std::uint8_t const* data, int width, int height) noexcept;
     };
 
-    // TODO: dilatation then erosion
+    // TODO: dilation then erosion
     class Closing {
     public:
       Pointer < std::uint8_t > operator () (std::uint8_t const* data, int width, int height) noexcept;

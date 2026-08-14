@@ -7,7 +7,6 @@
 #include "grayscale_converter.h"
 #include "noise_filter.h"
 #include "image_metrics.h"
-#include "preprocessing.h"
 #include "text_finder.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -24,7 +23,6 @@ int main(int argc, char * argv[]) {
   }
 
   std::filesystem::path name = argv[1];
-  std::print("Loading provided image \"{}\" ... ", name.string()); // TODO: handle Windows and Linux code
 
   int width, height, depth;
   auto data = stbi_load(argv[1], &width, &height, &depth, 3);
@@ -34,101 +32,68 @@ int main(int argc, char * argv[]) {
     return 2;
   }
 
-  std::print("Done\nConverting to grayscale using [...] ... "); // FIX when decision tree is made
+  mtti2t::RGB::Pixel * RGB_data = reinterpret_cast < mtti2t::RGB::Pixel* > (data);
+  auto grayscale_data = mtti2t::grayscale_converters::Recommendation601()(RGB_data, width, height);
 
-  // TODO: decision tree
-  mtti2t::grayscale_converters::GrayscaleConverter grayscale_converter;
-  mtti2t::Pointer < std::uint8_t > grayscale_data =
-      mtti2t::grayscale_converters::ApplyGrayscaleConversion(grayscale_converter,
-      reinterpret_cast < mtti2t::RGB::Pixel* > (data), width, height);
-  std::uint8_t * grayscale_data_raw = grayscale_data.value();
+  double entropy = mtti2t::image_metrics::GetEntropy(grayscale_data.value(), width, height);
+  double noisiness = mtti2t::image_metrics::GetNoisiness(grayscale_data.value(), width, height);
+  double bimodality = mtti2t::image_metrics::GetBimodality(grayscale_data.value(), width, height);
+  auto [brightness, contrast, cv] = mtti2t::image_metrics::GetBasics(grayscale_data.value(), width, height);
+  double edge_density = mtti2t::image_metrics::GetEdgeDensity(grayscale_data.value(), width, height);
 
-  if (grayscale_data_raw == nullptr) {
-    std::println("An error occurred while converting the provided image to grayscale");
-    stbi_image_free(data);
-    return 3;
+  std::println("entropy: {:.03}\nnoisiness: {:.03}\nbimodality: {:.03}\nbrightness: {:.03}\ncontrast: {:.03}\n"
+      "cv: {:.03}\nedge density: {:.03}",
+      entropy, noisiness, bimodality, brightness, contrast, cv, edge_density);
+
+  if (noisiness > 2.5) {
+    std::println("noisy image ... applying median filter");
+
+    grayscale_data = mtti2t::noise_filters::Median(3)(grayscale_data.value(), width, height);
+  }
+  else if (entropy > 7.0 && bimodality < 0.4) {
+    std::println("non-bimodal high entropy image suggests complex background ... applying Gaussian filter");
+
+    grayscale_data = mtti2t::noise_filters::Gaussian(3, 0.0)(grayscale_data.value(), width, height);
   }
 
-  std::println("Done");
+  mtti2t::Pointer < std::uint8_t > binary_data;
 
-  std::filesystem::path grayscale_name = argv[1];
-  grayscale_name.replace_filename("RESULT-GRAYSCALE.PNG");
-  stbi_write_png(grayscale_name.string().c_str(), width, height, 1, grayscale_data_raw, width);
+  if (bimodality > 0.55 && contrast > 35.0) {
+    std::println("might be a standard scan ... applying Otsu threshold");
 
-  auto basics = mtti2t::image_metrics::GetBasics(grayscale_data_raw, width, height);
-  auto entropy = mtti2t::image_metrics::GetEntropy(grayscale_data_raw, width, height);
-  auto noisiness = mtti2t::image_metrics::GetNoisiness(grayscale_data_raw, width, height);
-  auto bimodality = mtti2t::image_metrics::GetBimodality(grayscale_data_raw, width, height);
-  auto edge_density = mtti2t::image_metrics::GetEdgeDensity(grayscale_data_raw, width, height);
+    int otsu_threshold = mtti2t::binarizers::GetOtsuThreshold(grayscale_data.value(), width, height);
 
-  std::cout << "Brightness: " << basics.brightness << "\nContrast: " << basics.contrast << "\nNoisiness: " << noisiness <<
-      "\nCoefficient of variation: " << basics.CV << "\nBimodality: " << bimodality <<
-      "\nEdge density: " << edge_density << "\nEntropy: " << entropy << '\n';
-
-  mtti2t::binarizers::Binarizer binarizer;
-
-  // NOTE: may be good idea to add a feedback loop if multiple attempts are needed
-  // e.g. using canny edge density to decide if good threshold
-
-  if (bimodality > 0.60 && basics.CV < 1.5) {
-    int otsu_threshold = mtti2t::binarizers::GetOtsuThreshold(grayscale_data_raw, width, height);
-
-    std::println("Bimodal image -> Selected Otsu's method\nUsing global threshold: {}", otsu_threshold);
-    binarizer = mtti2t::binarizers::GlobalThreshold(otsu_threshold);
-  }
-  else if (noisiness < 15.0) {
-    // TODO: let user decide which algorithm to use / auto calculate best window size and K
-
-    int window_width = 7 * 2 + 1;
-    int window_height = 7 * 2 + 1;
-
-    std::println("Medium noisiness -> Selected Sauvola's method\nUsing window size of {}x{} with K = {}\n"
-        "Using integral images: {}", window_width, window_height, 0.2, true);
-    binarizer = mtti2t::binarizers::SauvolaThreshold(7, 7, 0.2, true);
-  }
-  else if (noisiness >= 15.0) {
-    // TODO: let user decide which algorithm to use / auto calculate best settings
-    // TODO: implement high noise specific algorithms
-
-    mtti2t::noise_filters::Gaussian noise_filter(5, 1.0);
-
-    std::println("High noise -> Applying a Gaussian filter with a {}x{} kernel and sigma of {}\n"
-        "Selected Sauvola's method\nUsing window size of {}x{} and K = {}\nUsing integral images: {}",
-        5, 5, 1.0, 12, 12, 0.1, true);
-    
-    grayscale_data = std::move(noise_filter(grayscale_data_raw, width, height));
-    grayscale_data_raw = grayscale_data.value();
-
-    if (grayscale_data_raw == nullptr) {
-      std::println("An error occurred while applying a Gaussian filter to the provided image");
-      stbi_image_free(data);
-      return 4;
-    }
-
-    binarizer = mtti2t::binarizers::SauvolaThreshold(12, 12, 0.1, true);
+    binary_data = mtti2t::binarizers::GlobalThreshold(otsu_threshold)(grayscale_data.value(), width, height);
   }
   else {
-    std::println("Invalid noisiness provided (must not be less than 0)");
-    return 5;
+    std::print("may be a normal image ... ");
+
+    if (cv < 0.4 || contrast < 20.0) {
+      std::println("low variance ... applying Wolf threshold");
+
+      binary_data = mtti2t::binarizers::WolfThreshold(20, 20, 0.1, true)(grayscale_data.value(), width, height);
+    }
+    else {
+      std::println("high variance ... applying Sauvola threshold");
+
+      binary_data = mtti2t::binarizers::SauvolaThreshold(7, 7, 0.2, true)(grayscale_data.value(), width, height);
+    }
   }
 
-  std::print("Converting to binary ... ");
+  if (edge_density > 0.12) {
+    std::println("too many edges ... applying dilation");
 
-  mtti2t::Pointer < std::uint8_t > binary_data = mtti2t::binarizers::ApplyBinarization(binarizer,
-      grayscale_data_raw, width, height);
-  std::uint8_t * binary_data_raw = binary_data.value();
-
-  if (binary_data_raw == nullptr) {
-    std::cout << "binary_data_raw == nullptr";
-    stbi_image_free(data);
-    return 6;
+    binary_data = mtti2t::noise_filters::Dilation()(binary_data.value(), width, height);
   }
+  else if (edge_density < 0.02 && brightness < 120) {
+    std::println("dark image which low edge density suggest bleeding characters ... applying erosion");
 
-  std::print("Done");
+    binary_data = mtti2t::noise_filters::Erosion()(binary_data.value(), width, height);
+  }
 
   std::filesystem::path binary_name = argv[1];
   binary_name.replace_filename("RESULT-BINARY.PNG");
-  stbi_write_png(binary_name.string().c_str(), width, height, 1, binary_data_raw, width);
+  stbi_write_png(binary_name.string().c_str(), width, height, 1, binary_data.value(), width);
 
   stbi_image_free(data);
 }

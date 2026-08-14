@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <cmath>
-#include <new>
 
 namespace mtti2t {
   // NOTE: lrint is fast but not optimal as it relies on the current rounding mode
@@ -55,7 +54,7 @@ namespace mtti2t {
 
         for (int index = 0; index < pixel_count; ++index) {
           grayscale_data_raw[index] = static_cast < std::uint8_t > (std::lrint(static_cast < double >
-              (data[index].r + data[index].g + data[index].b) / 3));
+              (data[index].r + data[index].g + data[index].b) / 3.0));
         }
       }
 

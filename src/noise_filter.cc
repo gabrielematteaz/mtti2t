@@ -143,7 +143,7 @@ namespace mtti2t {
       return result_data;
     }
 
-    Pointer < std::uint8_t > Dilatation::operator () (std::uint8_t const* data, int width, int height) noexcept {
+    Pointer < std::uint8_t > Dilation::operator () (std::uint8_t const* data, int width, int height) noexcept {
       if (data == nullptr || width <= 0 || height <= 0) {
         return { };
       }

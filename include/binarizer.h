@@ -16,8 +16,6 @@ namespace mtti2t {
     // add standard factories with some settings
 
     // niblack (?) + integral image
-    // otsu threshold OK
-    // sauvola threshold OK + integral image OK
     // super noisy ->
     // wolf algorithm
     // NICK algorithm
@@ -36,7 +34,7 @@ namespace mtti2t {
       bool use_integral_images_;
 
     public:
-      Pointer < std::uint8_t >  operator () (std::uint8_t const* grayscale_data, int width, int height) noexcept;
+      Pointer < std::uint8_t > operator () (std::uint8_t const* data, int width, int height) noexcept;
 
       SauvolaThreshold(int width_radius, int height_radius, double K, bool use_integral_images) noexcept {
         assert(width_radius > 0 && height_radius > 0);
@@ -48,39 +46,69 @@ namespace mtti2t {
       }
 
     private:
-      bool WithIntegralImages(std::uint8_t const* grayscale_data, std::uint8_t * binary_data, int width, int height) noexcept;
-      bool WithoutIntegralImages(std::uint8_t const* grayscale_data, std::uint8_t * binary_data, int width, int height) noexcept;
+      bool WithIntegralImages(std::uint8_t const* data, std::uint8_t * binary_data, int width, int height) noexcept;
+      bool WithoutIntegralImages(std::uint8_t const* data, std::uint8_t * binary_data, int width, int height) noexcept;
+    };
+
+    class WolfThreshold {
+      struct Integrals {
+        std::uint64_t sum;
+        std::uint64_t sum_squared;
+      };
+
+      // 40x40 (e.g. 300DPI) ~ must be twice the size of largest character
+      int width_radius_;
+      int height_radius_;
+      // 0.2-0.6 (usually 0.5)
+      double K_;
+      bool use_integral_images_;
+
+    public:
+      Pointer < std::uint8_t > operator () (std::uint8_t const* data, int width, int height) noexcept;
+
+      WolfThreshold(int width_radius, int height_radius, double K, bool use_integral_images) noexcept {
+        assert(width_radius > 0 && height_radius > 0);
+
+        width_radius_ = width_radius;
+        height_radius_ = height_radius;
+        K_ = K;
+        use_integral_images_ = use_integral_images;
+      }
+
+    private:
+      bool WithIntegralImages(std::uint8_t const* data, std::uint8_t * binary_data, int width, int height) noexcept;
+      bool WithoutIntegralImages(std::uint8_t const* data, std::uint8_t * binary_data, int width, int height) noexcept;
     };
 
     class GlobalThreshold {
       double threshold_;
 
     public:
-      Pointer < std::uint8_t > operator () (std::uint8_t const* grayscale_data, int width, int height) noexcept;
+      Pointer < std::uint8_t > operator () (std::uint8_t const* data, int width, int height) noexcept;
 
       GlobalThreshold(double threshold) noexcept {
         threshold_ = threshold;
       }
     };
 
-    int GetOtsuThreshold(std::uint8_t const* grayscale_data, int width, int height) noexcept;
+    int GetOtsuThreshold(std::uint8_t const* data, int width, int height) noexcept;
 
-    using Binarizer = std::variant < std::monostate, SauvolaThreshold, GlobalThreshold >;
+    using Binarizer = std::variant < std::monostate, SauvolaThreshold, GlobalThreshold, WolfThreshold >;
 
     template < typename BinarizerType >
-    inline Pointer < std::uint8_t > ApplyBinarization(BinarizerType & binarizer, std::uint8_t const* grayscale_data, int width,
+    inline Pointer < std::uint8_t > ApplyBinarization(BinarizerType & binarizer, std::uint8_t const* data, int width,
         int height) noexcept {
-      return binarizer(grayscale_data, width, height);
+      return binarizer(data, width, height);
     }
 
     inline Pointer < std::uint8_t > ApplyBinarization(std::monostate &, std::uint8_t const*, int, int) noexcept {
       return { };
     }
 
-    inline Pointer < std::uint8_t > ApplyBinarization(Binarizer & binarizer, std::uint8_t const* grayscale_data, int width,
+    inline Pointer < std::uint8_t > ApplyBinarization(Binarizer & binarizer, std::uint8_t const* data, int width,
         int height) noexcept {
       return std::visit([=] (auto & binarizer) noexcept -> Pointer < std::uint8_t > {
-        return ApplyBinarization(binarizer, grayscale_data, width, height);
+        return ApplyBinarization(binarizer, data, width, height);
       }, binarizer);
     }
   }
